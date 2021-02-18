@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: go-plumbing
+spec:
+  template:
+    spec:
+      containers:
+      - name: plumb
+        image: joshuarobinson/go-plumbing:0.2
+        env:
+          - name: FB_MGMT_VIP
+            value: "10.62.64.20"
+          - name: FB_TOKEN
+            value: "T-ab0ed3e0-5438-4485-9503-863e6a9c1434"
+      restartPolicy: Never
+  backoffLimit: 4
