@@ -7,6 +7,7 @@ This program is intended to validate NFS and S3 read/write performance from a si
 Requires as input only the Management VIP and login token for a FlashBlade. Specify these using environment variables FB_MGMT_VIP and FB_TOKEN.
 
 The token can be created or retrieved via the FlashBlade CLI:
+
 ```pureadmin [create|list] --api-token --expose```
 
 This program operates by using the FlashBlade REST API to create test filesystems and object store accounts/key/buckets and then userspace NFS and S3 code to test write and read performance.
@@ -26,7 +27,8 @@ An example output looks like below, where the client can only reach the FlashBla
 192.168.171.11,s3,FAILED TO CONNECT,-,-
 192.168.172.11,s3,FAILED TO CONNECT,-,-
 192.168.173.11,s3,FAILED TO CONNECT,-,-
-192.168.170.11,s3,SUCCESS,1.7 GB/s,4.3 GB/s```
+192.168.170.11,s3,SUCCESS,1.7 GB/s,4.3 GB/s
+```
 
 ## Running
 
@@ -39,6 +41,7 @@ Add a nodeSelector if you want to test a specific node in your cluster.
 ### Docker
 
 The following docker run invocates the plumbing tool. Use your values for the MGMT_VIP and TOKEN environment variables.
+
 ```docker run -it --rm -e FB_MGMT_VIP=$FB_MGMT_VIP -e FB_TOKEN=$FB_MGMT_TOKEN joshuarobinson/go-plumbing:0.2```
 
 ### Binary
