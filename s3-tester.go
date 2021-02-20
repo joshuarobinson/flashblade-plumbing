@@ -4,7 +4,6 @@ import (
     "bytes"
     "fmt"
     "math/rand"
-    "runtime"
     "strconv"
     "sync"
     "sync/atomic"
@@ -24,6 +23,7 @@ type S3Tester struct {
     accessKey string
     secretKey string
     bucket string
+    concurrency int
 
     wg sync.WaitGroup
     atm_finished int32
@@ -33,9 +33,9 @@ type S3Tester struct {
     objectsWritten int
 }
 
-func NewS3Tester(endpoint string, accessKey string, secretKey string, bucketname string) (*S3Tester, error) {
+func NewS3Tester(endpoint string, accessKey string, secretKey string, bucketname string, concurrency int) (*S3Tester, error) {
 
-    s3Tester := &S3Tester{endpoint: endpoint, accessKey: accessKey, secretKey: secretKey, bucket: bucketname, objectsWritten: 0}
+    s3Tester := &S3Tester{endpoint: endpoint, accessKey: accessKey, secretKey: secretKey, bucket: bucketname, concurrency: concurrency, objectsWritten: 0}
 
     s3Config := &aws.Config{
         Endpoint:         aws.String(endpoint),
@@ -111,12 +111,10 @@ func generateTestObjectName(i int) string {
 
 func (s *S3Tester) WriteTest() float64 {
 
-    threadCount := runtime.NumCPU()
-
     atomic.StoreInt32(&s.atm_finished, 0)
     atomic.StoreUint64(&s.atm_counter_bytes_written, 0)
 
-    for i := 1; i <= threadCount; i++ {
+    for i := 1; i <= s.concurrency; i++ {
         prefix := generateTestObjectName(i)
         s.wg.Add(1)
         go s.writeOneObject(prefix)
@@ -125,7 +123,7 @@ func (s *S3Tester) WriteTest() float64 {
     time.Sleep(s3TestPeriod * time.Second)
     atomic.StoreInt32(&s.atm_finished, 1)
     s.wg.Wait()
-    s.objectsWritten += threadCount
+    s.objectsWritten += s.concurrency
 
     total_bytes := atomic.LoadUint64(&s.atm_counter_bytes_written)
     return float64(total_bytes) / float64(s3TestPeriod)

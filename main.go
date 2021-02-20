@@ -4,6 +4,7 @@ import (
     "flag"
     "fmt"
     "os"
+    "runtime"
 )
 
 const testFilesystemName = "deleteme-go-plumbing"
@@ -88,7 +89,7 @@ func main() {
 
             export := "/" + fsname
             fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
-            nfs, err := NewNFSTester(dataVip, export)
+            nfs, err := NewNFSTester(dataVip, export, runtime.NumCPU() * 2)
 
             if err != nil {
                 fmt.Println(err)
@@ -148,7 +149,7 @@ func main() {
                 os.Exit(1)
             }
 
-            s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, testObjectBucketName)
+            s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, testObjectBucketName, runtime.NumCPU())
             if err != nil {
                 fmt.Println(err)
                 c.DeleteObjectStoreBucket(testObjectBucketName)
