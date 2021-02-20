@@ -13,7 +13,8 @@ This program operates by using the FlashBlade REST API to create test filesystem
 In case of multiple data VIPs defined on the FlashBlade, the program will test against one data VIP per configured subnet.
 
 An example output looks like below, where the client can only reach the FlashBlade on one of the configured data VIPs:
-```dataVip,protocol,result,write_tput,read_tput
+```
+dataVip,protocol,result,write_tput,read_tput
 192.168.171.11,nfs,MOUNT FAILED,-,-
 192.168.172.11,nfs,MOUNT FAILED,-,-
 192.168.173.11,nfs,MOUNT FAILED,-,-
@@ -44,4 +45,10 @@ The following docker run invocates the plumbing tool. Use your values for the MG
 
 ### Binary
 
-TODO
+Download the Linux binary from the [release page](https://github.com/joshuarobinson/flashblade-plumbing/releases/tag/v0.2).
+
+```
+wget https://github.com/joshuarobinson/flashblade-plumbing/releases/download/v0.2/fb-plumbing-v0.2
+chmod a+x fb-plumbing-v0.2
+FB_MGMT_VIP=10.6.6.20 FB_TOKEN=REPLACEME ./fb-plumbing-v0.2
+```
