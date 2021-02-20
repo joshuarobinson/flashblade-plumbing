@@ -31,6 +31,11 @@ func main() {
         os.Exit(1)
     }
 
+    coreCount := runtime.NumCPU()
+    if coreCount < 12 {
+        fmt.Printf("WARNING. Found %d cores, recommend at least 12 cores to prevent client bottlenecks.\n", coreCount)
+    }
+
     c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
     if err != nil {
         fmt.Println(err)
@@ -89,7 +94,7 @@ func main() {
 
             export := "/" + fsname
             fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
-            nfs, err := NewNFSTester(dataVip, export, runtime.NumCPU() * 2)
+            nfs, err := NewNFSTester(dataVip, export, coreCount * 2)
 
             if err != nil {
                 fmt.Println(err)
@@ -149,7 +154,7 @@ func main() {
                 os.Exit(1)
             }
 
-            s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, testObjectBucketName, runtime.NumCPU())
+            s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, testObjectBucketName, coreCount)
             if err != nil {
                 fmt.Println(err)
                 c.DeleteObjectStoreBucket(testObjectBucketName)
