@@ -2,9 +2,7 @@
 
 Program to test FlashBlade connectivity and performance.
 
-This program is intended to validate NFS and S3 read/write performance from a single client to a FlashBlade with minimal dependencies. The result is a single Go program with minimal input required.
-
-Requires as input only the Management VIP and login token for a FlashBlade. Specify these using environment variables FB_MGMT_VIP and FB_TOKEN.
+This program is intended to validate NFS and S3 read/write performance from a single client to a FlashBlade with minimal dependencies. The result is a single Go program with minimal input required: 1) the FlashBlade management VIP and 2) login token. Specify these using environment variables FB_MGMT_VIP and FB_TOKEN.
 
 The token can be created or retrieved via the FlashBlade CLI:
 
