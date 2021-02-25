@@ -13,5 +13,7 @@ spec:
             value: "10.6.6.20"
           - name: FB_TOKEN
             value: "REPLACEME"
+      nodeSelector:
+        nodeID: worker01
       restartPolicy: Never
   backoffLimit: 4
