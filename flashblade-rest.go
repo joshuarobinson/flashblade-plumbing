@@ -228,7 +228,12 @@ func (c *FlashBladeClient) login() error {
 	}
     defer resp.Body.Close()
 
-    c.xauthToken = resp.Header["X-Auth-Token"][0]
+    if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+        c.xauthToken = resp.Header["X-Auth-Token"][0]
+    } else {
+        return fmt.Errorf("Login to FlashBalde at %s failed with status %d\n", c.Target, resp.StatusCode)
+    }
+
 	return nil
 }
 
