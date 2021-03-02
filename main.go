@@ -5,6 +5,7 @@ import (
     "fmt"
     "os"
     "runtime"
+    "strings"
 )
 
 const testFilesystemName = "deleteme-go-plumbing"
@@ -40,6 +41,8 @@ func main() {
         fmt.Println("Null hostname.")
         hostname = "null"
     }
+    // Use only the short hostname because dots are invalid in filesystem names.
+    hostname = strings.Split(hostname, ".")[0]
 
     c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
     if err != nil {
