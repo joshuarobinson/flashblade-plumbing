@@ -9,7 +9,6 @@ import (
     "io/ioutil"
     "net/http"
     "net/url"
-    //"strconv"
     "time"
 )
 
@@ -149,29 +148,6 @@ type BucketPatch struct {
     Versioning string `json:"versioning,omitempty"`
 }
 
-type FileSystemPerformance struct {
-    Id string `json:"id,omitempty"`
-    Name string `json:"name,omitempty"`
-    BytesPerOp float64 `json:"bytes_per_op,omitempty"`
-    BytesPerRead float64 `json:"bytes_per_read,omitempty"`
-    BytesPerWrite float64 `json:"bytes_per_write,omitempty"`
-    OthersPerSec float64 `json:"others_per_sec"`
-    ReadBytesPerSec float64 `json:"read_bytes_per_sec"`
-    ReadsPerSec float64 `json:"reads_per_sec"`
-    Time int `json:"time"`
-    UsecPerOtherOp float64 `json:"usec_per_other_op,omitempty"`
-    UsecPerReadOp float64 `json:"usec_per_read_op,omitempty"`
-    UsecPerWriteOp float64 `json:"usec_per_write_op,omitempty"`
-    WriteBytesPerSec float64 `json:"write_bytes_per_sec"`
-    WritesPerSec float64 `json:"writes_per_sec"`
-}
-
-type FileSystemPerformanceResponse struct {
-    paginationInfo PaginationInfo `json:"pagination_info"`
-    Total []FileSystemPerformance `json:"total"`
-    Items []FileSystemPerformance `json:"items"`
-}
-
 type FlashBladeClient struct {
     Target string
     APIToken string
@@ -287,12 +263,6 @@ func (c *FlashBladeClient) SendRequest(method string, path string, params map[st
 	req.Header.Add("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
     req.Header.Add("x-auth-token", c.xauthToken)
-
-    //requestDump, err := httputil.DumpRequest(req, true)
-    //if err != nil {
-    //  fmt.Println(err)
-    //}
-    //fmt.Println(string(requestDump))
 
     resp, err := c.client.Do(req)
 	if err != nil {
@@ -492,6 +462,9 @@ func (c *FlashBladeClient) DeleteObjectStoreBucket(name string) error {
     }
 
     _, err = c.SendRequest("PATCH", "buckets", params, patchdata)
+    if err != nil {
+        return err
+    }
 
     _, err = c.SendRequest("DELETE", "buckets", params, nil)
     if err != nil {
@@ -500,27 +473,6 @@ func (c *FlashBladeClient) DeleteObjectStoreBucket(name string) error {
     return err
 }
 
-func (c *FlashBladeClient) ListFileSystemsPerformance(name string) ([]FileSystemPerformance, error) {
-
-    //now := time.Now().Unix()
-    var params = map[string]string{"names": name, "protocol": "nfs"}
-    //params["start_time"] = strconv.FormatInt(now - 30, 10)
-    //params["end_time"] = strconv.FormatInt(now, 10)
-
-    respString, err := c.SendRequest("GET", "file-systems/performance", params, nil)
-    if err != nil {
-        return nil, err
-    }
-    fmt.Println(respString)
-    var res FileSystemPerformanceResponse
-    err = json.Unmarshal([]byte(respString), &res)
-
-    if res.paginationInfo.ContinuationToken != "" {
-        fmt.Println("Not prepared for a continuation token in ListFileSystemsPerformance")
-    }
-
-    return res.Items, nil
-}
 
 func NewFlashBladeClient(target string, apiToken string) (*FlashBladeClient, error) {
 
