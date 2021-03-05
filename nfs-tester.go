@@ -10,8 +10,8 @@ import (
     "sync/atomic"
     "time"
 
-    "github.com/llaaiiqq/go-nfs-client/nfs"
-    "github.com/llaaiiqq/go-nfs-client/nfs/rpc"
+    "github.com/joshuarobinson/go-nfs-client/nfs"
+    "github.com/joshuarobinson/go-nfs-client/nfs/rpc"
 )
 
 const nfsTestPeriod = 60

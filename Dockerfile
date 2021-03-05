@@ -4,9 +4,6 @@ RUN apk add build-base git musl-dev
 
 RUN mkdir /app
 
-RUN go get -tags musl -u github.com/llaaiiqq/go-nfs-client/nfs
-RUN go get -u github.com/aws/aws-sdk-go/...
-
 ADD . /app
 WORKDIR /app
 
