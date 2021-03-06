@@ -244,34 +244,34 @@ func (c *FlashBladeClient) SendRequest(method string, path string, params map[st
 
     baseURL, err := url.Parse(c.formatPath(path))
     if err != nil {
-		return "", err
-	}
+        return "", err
+    }
 
     if params != nil {
-		ps := url.Values{}
-		for k, v := range params {
-			ps.Set(k, v)
-		}
-		baseURL.RawQuery = ps.Encode()
-	}
+    ps := url.Values{}
+    for k, v := range params {
+        ps.Set(k, v)
+    }
+    baseURL.RawQuery = ps.Encode()
+}
 
     req, err := http.NewRequest(method, baseURL.String(), bytes.NewBuffer(data))
     if err != nil {
-		return "", err
-	}
+        return "", err
+    }
     req.Header.Add("content-type", "application/json; charset=utf-8")
-	req.Header.Add("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
+    req.Header.Add("Accept", "application/json")
+    req.Header.Set("Content-Type", "application/json")
     req.Header.Add("x-auth-token", c.xauthToken)
 
     resp, err := c.client.Do(req)
 	if err != nil {
-		return "", err
+        return "", err
 	}
 	defer resp.Body.Close()
 
     if c := resp.StatusCode; 200 < c || c > 299 {
-        err := fmt.Errorf("[error] HTTP request %s %s did not succeed: ", method, baseURL.String(), http.StatusText(c))
+        err := fmt.Errorf("[error %d] HTTP request %s %s did not succeed: ", resp.StatusCode, method, baseURL.String(), http.StatusText(c))
         return "", err
     }
 
@@ -312,8 +312,9 @@ func (c *FlashBladeClient) CreateFileSystem(filesystem FileSystem) error {
         return err
     }
 
-    _, err = c.SendRequest("POST", "file-systems", nil, data)
+    resp, err := c.SendRequest("POST", "file-systems", nil, data)
     if err != nil {
+        fmt.Printf(resp)
         return err
     }
     return err

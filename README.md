@@ -10,6 +10,8 @@ The token can be created or retrieved via the FlashBlade CLI:
 
 This program operates by using the FlashBlade REST API to create test filesystems and object store accounts/key/buckets and then userspace NFS and S3 code to test write and read performance. The data written is random, uncompressible data. In case of multiple data VIPs defined on the FlashBlade, the program will test against one data VIP per configured subnet. If a connection fails or a mount times out, the program will proceed to the next data VIP and continue testing.
 
+This tool will not work with a read-only API token or if SafeMode is enabled.
+
 An example output looks like below, where the client can only reach the FlashBlade on one of the configured data VIPs:
 ```
 dataVip,protocol,result,write_tput,read_tput
