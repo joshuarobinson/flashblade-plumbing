@@ -271,7 +271,7 @@ func (c *FlashBladeClient) SendRequest(method string, path string, params map[st
 	defer resp.Body.Close()
 
     if c := resp.StatusCode; 200 < c || c > 299 {
-        err := fmt.Errorf("[error] HTTP request did not succeed: ", http.StatusText(c))
+        err := fmt.Errorf("[error] HTTP request %s %s did not succeed: ", method, baseURL.String(), http.StatusText(c))
         return "", err
     }
 

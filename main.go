@@ -78,6 +78,7 @@ func main() {
     if *skipNfsPtr == false {
 
         fsname := testFilesystemName + "-" + hostname
+        fmt.Printf("Checking for filesystem %s\n", fsname)
         _, err = c.GetFileSystem(fsname)
         if err == nil {
             fmt.Printf("Filesystem %s already exists, exiting\n", fsname)
