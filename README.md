@@ -44,3 +44,12 @@ wget https://github.com/joshuarobinson/flashblade-plumbing/releases/download/v0.
 chmod a+x fb-plumbing-v0.2
 FB_MGMT_VIP=REPLACEME FB_TOKEN=REPLACEME ./fb-plumbing-v0.2
 ```
+
+### Multiple Hosts with Ansible
+
+The following Ansible ad hoc commands first copy the downloaded binary to all nodes and then runs the tool one host at a time using the “--forks” option to disable parallelism.
+
+```
+ansible myhosts -o -m copy -a "src=fb-plumbing-v0.2 dest=fb-plumbing mode=+x"
+ansible myhosts -f 1 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 ./fb-plumbing"
+```

@@ -50,25 +50,11 @@ type NetworkInterfaceResponse struct {
     Items []NetworkInterface `json:"items"`
 }
 
-type ProtocolRule struct {
-    Enabled bool `json:"enabled"`
-}
-
-type MultiProtocolRule struct {
-    AccessControlStyle string `json:"access_control_style"`
-    SafeguardAcls bool `json:"safeguard_acls"`
-}
-
 type NfsRule struct {
     Enabled bool `json:"enabled"`
     Rules string `json:"rules,omitempty"`
     V3Enabled bool `json:"v3_enabled"`
     V41Enabled bool `json:"v4_1_enabled"`
-}
-
-type SmbRule struct {
-    Enabled bool `json:"enabled"`
-    AclMode string `json:"acl_mode"`
 }
 
 type Reference struct {
@@ -96,25 +82,15 @@ type Space struct {
 
 type FileSystem struct {
     Name string `json:"name,omitempty"`
-    //Created int `json:"created"`
+    Created int `json:"created,omitempty"`
     Id string `json:"id,omitempty"`
     DefaultUserQuota int `json:"default_user_quota,omitempty"`
     DefaultGroupQuota int `json:"default_group_quota,omitempty"`
     Destroyed bool `json:"destroyed,omitempty"`
     FastRemoveDirectoryEnabled bool `json:"fast_remove_directory_enabled,omitempty"`
-    //HardLimitEnabled bool `json:"hard_limit_enabled"`
-    //Http ProtocolRule `json:"http"`
-    //MultiProtocol MultiProtocolRule `json:"multi_protocol"`
     Nfs NfsRule `json:"nfs,omitempty"`
     Provisioned int `json:"provisioned,omitempty"`
-    //PromotionStatus string `json:"promotion_status"`
-    //RequestedPromotionState string `json:"requested_promotion_state"`
-    //Smb SmbRule `json:"smb"`
-    //SnapshotDirectoryEnabled bool `json:"snapshot_directory_enabled"`
-    //Source LocationReference `json:"source"`
-    //Space Space `json:"space"`
-    //TimeRemaining int `json:"time_remaining"`
-    //Writable bool `json:"writable,omitempty"`
+    SnapshotDirectoryEnabled bool `json:"snapshot_directory_enabled,omitempty"`
 }
 
 type UserType struct {
