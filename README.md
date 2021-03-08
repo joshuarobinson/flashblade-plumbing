@@ -51,5 +51,5 @@ The following Ansible ad hoc commands first copy the downloaded binary to all no
 
 ```
 ansible myhosts -o -m copy -a "src=fb-plumbing-v0.2 dest=fb-plumbing mode=+x"
-ansible myhosts -f 1 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 ./fb-plumbing"
+ansible myhosts --forks 1 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 ./fb-plumbing"
 ```
