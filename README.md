@@ -33,16 +33,16 @@ Add a nodeSelector if you want to test a specific node in your cluster.
 
 The following docker run invocates the plumbing tool. Use your values for the MGMT_VIP and TOKEN environment variables.
 
-```docker run -it --rm -e FB_MGMT_VIP=$FB_MGMT_VIP -e FB_TOKEN=$FB_MGMT_TOKEN joshuarobinson/go-plumbing:0.2```
+```docker run -it --rm -e FB_MGMT_VIP=$FB_MGMT_VIP -e FB_TOKEN=$FB_MGMT_TOKEN joshuarobinson/go-plumbing:0.3```
 
 ### Binary
 
-Download the Linux binary from the [release page](https://github.com/joshuarobinson/flashblade-plumbing/releases/tag/v0.2).
+Download the Linux binary from the [release page](https://github.com/joshuarobinson/flashblade-plumbing/releases/tag/v0.3).
 
 ```
-wget https://github.com/joshuarobinson/flashblade-plumbing/releases/download/v0.2/fb-plumbing-v0.2
-chmod a+x fb-plumbing-v0.2
-FB_MGMT_VIP=REPLACEME FB_TOKEN=REPLACEME ./fb-plumbing-v0.2
+wget https://github.com/joshuarobinson/flashblade-plumbing/releases/download/v0.3/fb-plumbing-v0.3
+chmod a+x fb-plumbing-v0.3
+FB_MGMT_VIP=REPLACEME FB_TOKEN=REPLACEME ./fb-plumbing-v0.3
 ```
 
 ### Multiple Hosts with Ansible
@@ -50,6 +50,6 @@ FB_MGMT_VIP=REPLACEME FB_TOKEN=REPLACEME ./fb-plumbing-v0.2
 The following Ansible ad hoc commands first copy the downloaded binary to all nodes and then runs the tool one host at a time using the “--forks” option to disable parallelism.
 
 ```
-ansible myhosts -o -m copy -a "src=fb-plumbing-v0.2 dest=fb-plumbing mode=+x"
+ansible myhosts -o -m copy -a "src=fb-plumbing-v0.3 dest=fb-plumbing mode=+x"
 ansible myhosts --forks 1 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 ./fb-plumbing"
 ```
