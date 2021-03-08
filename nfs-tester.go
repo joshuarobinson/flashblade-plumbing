@@ -6,6 +6,7 @@ import (
     "io"
     "math/rand"
     "os"
+    "strconv"
     "sync"
     "sync/atomic"
     "time"
@@ -61,23 +62,27 @@ func NewNFSTester(nfshost string, export string, concurrency int) (*NFSTester, e
 func (n *NFSTester) writeOneFile(fname string) {
 
     defer n.wg.Done()
-    srcBuf := make([]byte, 1024 * 1024)
-    rand.Read(srcBuf)
 
     mount, err := nfs.DialMount(n.nfshost, false)
     if err != nil {
+        fmt.Println("Portmapper failed.")
         fmt.Println(err)
         return
     }
     auth := rpc.NewAuthUnix("anon", 1001, 1001)
     target, err := mount.Mount(n.export, auth.Auth(), false)
     if err != nil {
+        fmt.Println("Unable to mount.")
         fmt.Println(err)
         return
     }
 
+    srcBuf := make([]byte, 1024 * 1024)
+    rand.Read(srcBuf)
+
     f, err := target.OpenFile(fname, os.FileMode(int(0744)))
     if err != nil {
+        fmt.Printf("OpenFile %s failed\n", fname)
         fmt.Println(err)
         return
     }
@@ -96,7 +101,7 @@ func (n *NFSTester) writeOneFile(fname string) {
 func generateTestFilename(i int) string {
 
     baseDir := "/"
-    fname := baseDir + "filename" + string(i)
+    fname := baseDir + "filename" + strconv.Itoa(i)
     return fname
 }
 
