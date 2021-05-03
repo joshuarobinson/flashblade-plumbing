@@ -8,6 +8,7 @@ ADD . /app
 WORKDIR /app
 
 # Run go build to compile
+RUN go mod init main && go mod tidy 
 RUN go build -tags musl -o fb-plumbing .
 
 # Copy only the binary into the final Docker image
