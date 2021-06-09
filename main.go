@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 )
 
 const testFilesystemName = "deleteme-go-plumbing"
 const testObjectAccountName = "deleteme-go-plumb-account"
 const testObjectUserName = "deleteme-go-plumb-user"
 const testObjectBucketName = "deleteme-go-plumb-bucket"
+
 
 func main() {
 
@@ -35,13 +35,8 @@ func main() {
 	if coreCount < 12 {
 		fmt.Printf("WARNING. Found %d cores, recommend at least 12 cores to prevent client bottlenecks.\n", coreCount)
 	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		fmt.Println("Null hostname.")
-		hostname = "null"
-	}
-	// Use only the short hostname because dots are invalid in filesystem names.
-	hostname = strings.Split(hostname, ".")[0]
+
+    hostname := getShortHostname()
 
 	c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
 	if err != nil {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+    "os"
+	"strings"
 )
 
 type nullWriterAt struct {
@@ -29,4 +31,15 @@ func ByteRateSI(b float64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB/s", b/float64(div), "kMGTPE"[exp])
+}
+
+func getShortHostname() (string) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Warning, null hostname.")
+		hostname = "null"
+	}
+	// Use only the short hostname because dots are invalid in filesystem names.
+	hostname = strings.Split(hostname, ".")[0]
+    return hostname
 }
