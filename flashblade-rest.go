@@ -181,7 +181,7 @@ func (c *FlashBladeClient) login() error {
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		c.xauthToken = resp.Header["X-Auth-Token"][0]
 	} else {
-		return fmt.Errorf("Login to FlashBalde at %s failed with status %d\n", c.Target, resp.StatusCode)
+		return fmt.Errorf("Login to FlashBlade at %s failed with status %d\n", c.Target, resp.StatusCode)
 	}
 
 	return nil
@@ -245,7 +245,7 @@ func (c *FlashBladeClient) SendRequest(method string, path string, params map[st
 	defer resp.Body.Close()
 
 	if c := resp.StatusCode; 200 < c || c > 299 {
-		err := fmt.Errorf("[error %d] HTTP request %s %s did not succeed: ", resp.StatusCode, method, baseURL.String(), http.StatusText(c))
+		err := fmt.Errorf("[error %d] HTTP request %s %s did not succeed: %s", resp.StatusCode, method, baseURL.String(), http.StatusText(c))
 		return "", err
 	}
 
