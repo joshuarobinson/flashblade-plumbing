@@ -41,5 +41,5 @@ func getShortHostname() (string) {
 	}
 	// Use only the short hostname because dots are invalid in filesystem names.
 	hostname = strings.Split(hostname, ".")[0]
-    return hostname
+    return strings.ToLower(hostname)
 }
