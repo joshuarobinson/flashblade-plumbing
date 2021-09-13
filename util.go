@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-    "os"
+	"os"
 	"strings"
 )
 
@@ -33,7 +33,7 @@ func ByteRateSI(b float64) string {
 	return fmt.Sprintf("%.1f %cB/s", b/float64(div), "kMGTPE"[exp])
 }
 
-func getShortHostname() (string) {
+func getShortHostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
 		fmt.Println("Warning, null hostname.")
@@ -41,5 +41,5 @@ func getShortHostname() (string) {
 	}
 	// Use only the short hostname because dots are invalid in filesystem names.
 	hostname = strings.Split(hostname, ".")[0]
-    return strings.ToLower(hostname)
+	return strings.ToLower(hostname)
 }

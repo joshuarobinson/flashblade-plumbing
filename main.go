@@ -12,7 +12,6 @@ const testObjectAccountName = "deleteme-go-plumb-account"
 const testObjectUserName = "deleteme-go-plumb-user"
 const testObjectBucketName = "deleteme-go-plumb-bucket"
 
-
 func main() {
 
 	skipNfsPtr := flag.Bool("skip-nfs", false, "Skip NFS Tests")
@@ -36,7 +35,7 @@ func main() {
 		fmt.Printf("WARNING. Found %d cores, recommend at least 12 cores to prevent client bottlenecks.\n", coreCount)
 	}
 
-    hostname := getShortHostname()
+	hostname := getShortHostname()
 
 	c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
 	if err != nil {
