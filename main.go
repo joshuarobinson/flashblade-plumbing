@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sort"
 )
 
 const testFilesystemName = "deleteme-go-plumbing"
@@ -57,6 +58,7 @@ func main() {
 				dataVips[net.Subnet.Name] = append(dataVips[net.Subnet.Name], net.Address)
 			}
 		}
+		sort.Strings(dataVips[net.Subnet.Name])
 	}
 
 	if len(dataVips) == 0 {
