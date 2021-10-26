@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: go-plumbing
+spec:
+  template:
+    metadata:
+      labels:
+        name: plumb
+    spec:
+      containers:
+      - name: plumb
+        image: joshuarobinson/go-plumbing:0.3
+        env:
+          - name: FB_MGMT_VIP
+            value: "REPLACEME"
+          - name: FB_TOKEN
+            value: "REPLACEME"
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      name: plumb
