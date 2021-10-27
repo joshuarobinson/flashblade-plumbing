@@ -15,12 +15,11 @@ import (
 	"github.com/joshuarobinson/go-nfs-client/nfs/rpc"
 )
 
-const nfsTestPeriod = 60
-
 type NFSTester struct {
-	nfshost     string
-	export      string
-	concurrency int
+	nfshost         string
+	export          string
+	concurrency     int
+	durationSeconds int
 
 	wg                        sync.WaitGroup
 	atm_finished              int32
@@ -30,14 +29,18 @@ type NFSTester struct {
 	filesWritten int
 }
 
-func NewNFSTester(nfshost string, export string, concurrency int) (*NFSTester, error) {
+func NewNFSTester(nfshost string, export string, concurrency int, duration int) (*NFSTester, error) {
 
 	if len(nfshost) == 0 || len(export) == 0 {
 		err := errors.New("[error] Must specify host and export.")
 		return nil, err
 	}
 
-	nfsTester := &NFSTester{nfshost: nfshost, export: export, concurrency: concurrency, filesWritten: 0}
+	if duration < 1 {
+		return nil, errors.New("[error] Must specify positive test duration.")
+	}
+
+	nfsTester := &NFSTester{nfshost: nfshost, export: export, concurrency: concurrency, durationSeconds: duration, filesWritten: 0}
 
 	// Try and mount to verify
 	mount, err := nfs.DialMount(nfshost, false)
@@ -116,13 +119,13 @@ func (n *NFSTester) WriteTest() float64 {
 		go n.writeOneFile(fname)
 	}
 
-	time.Sleep(nfsTestPeriod * time.Second)
+	time.Sleep(time.Duration(n.durationSeconds) * time.Second)
 	atomic.StoreInt32(&n.atm_finished, 1)
 	n.wg.Wait()
 	n.filesWritten += n.concurrency
 
 	total_bytes := atomic.LoadUint64(&n.atm_counter_bytes_written)
-	return float64(total_bytes) / float64(nfsTestPeriod)
+	return float64(total_bytes) / float64(n.durationSeconds)
 }
 
 func (n *NFSTester) readOneFile(fname string) {
@@ -180,10 +183,10 @@ func (n *NFSTester) ReadTest() float64 {
 		go n.readOneFile(fname)
 	}
 
-	time.Sleep(nfsTestPeriod * time.Second)
+	time.Sleep(time.Duration(n.durationSeconds) * time.Second)
 	atomic.StoreInt32(&n.atm_finished, 1)
 	n.wg.Wait()
 
 	total_bytes := atomic.LoadUint64(&n.atm_counter_bytes_read)
-	return float64(total_bytes) / float64(nfsTestPeriod)
+	return float64(total_bytes) / float64(n.durationSeconds)
 }

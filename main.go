@@ -17,7 +17,10 @@ func main() {
 
 	skipNfsPtr := flag.Bool("skip-nfs", false, "Skip NFS Tests")
 	skipS3Ptr := flag.Bool("skip-s3", false, "Skip S3 Tests")
+	testDurationPtr := flag.Int("test-duration", 60, "Duration to run each test, in seconds.")
 	flag.Parse()
+
+	testDuration := *testDurationPtr
 
 	mgmtVIP := os.Getenv("FB_MGMT_VIP")
 	fbtoken := os.Getenv("FB_TOKEN")
@@ -37,6 +40,8 @@ func main() {
 	}
 
 	hostname := getShortHostname()
+
+	// Begin Main application logic.
 
 	c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
 	if err != nil {
@@ -91,7 +96,7 @@ func main() {
 
 			export := "/" + fsname
 			fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
-			nfs, err := NewNFSTester(dataVip, export, coreCount*2)
+			nfs, err := NewNFSTester(dataVip, export, coreCount*2, testDuration)
 
 			if err != nil {
 				fmt.Println(err)
@@ -154,7 +159,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, bucketName, coreCount)
+			s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, bucketName, coreCount, testDuration)
 			if err != nil {
 				fmt.Println(err)
 				c.DeleteObjectStoreBucket(bucketName)
