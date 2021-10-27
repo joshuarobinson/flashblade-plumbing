@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 )
 
@@ -446,6 +447,31 @@ func (c *FlashBladeClient) DeleteObjectStoreBucket(name string) error {
 		return err
 	}
 	return err
+}
+
+func (c *FlashBladeClient) GetOneDataInterfacePerSubnet() ([]string, error) {
+	nets, err := c.ListNetworkInterfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	dataVipMap := make(map[string][]string)
+	for _, net := range nets {
+		for i := range net.Services {
+			if net.Services[i] == "data" {
+				dataVipMap[net.Subnet.Name] = append(dataVipMap[net.Subnet.Name], net.Address)
+			}
+		}
+		sort.Strings(dataVipMap[net.Subnet.Name])
+	}
+	dataVips := []string{}
+	for k, v := range dataVipMap {
+		if len(v) > 1 {
+			fmt.Printf("Found %d data VIPs in subnet %s, will use: %s\n", len(v), k, v[0])
+		}
+		dataVips = append(dataVips, v[0])
+	}
+	return dataVips, nil
 }
 
 func NewFlashBladeClient(target string, apiToken string) (*FlashBladeClient, error) {

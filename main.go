@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"sort"
 )
 
 const testFilesystemName = "deleteme-go-plumbing"
 const testObjectAccountName = "deleteme-go-plumb-account"
 const testObjectUserName = "deleteme-go-plumb-user"
 const testObjectBucketName = "deleteme-go-plumb-bucket"
+
 
 func main() {
 
@@ -50,27 +50,20 @@ func main() {
 	}
 	defer c.Close()
 
-	nets, err := c.ListNetworkInterfaces()
+	dataVips, err := c.GetOneDataInterfacePerSubnet()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	dataVips := make(map[string][]string)
-	for _, net := range nets {
-		for i := range net.Services {
-			if net.Services[i] == "data" {
-				dataVips[net.Subnet.Name] = append(dataVips[net.Subnet.Name], net.Address)
-			}
-		}
-		sort.Strings(dataVips[net.Subnet.Name])
+	if len(dataVips) > 1 {
+		fmt.Printf("Found %d subnets with data VIPs. Will test one VIP per subnet.\n", len(dataVips))
 	}
 
 	if len(dataVips) == 0 {
 		fmt.Println("Found no data VIPs, unable to proceed.")
 		os.Exit(1)
 	}
-	fmt.Printf("Found %d subnets with data VIPs. Will test one VIP per subnet.\n", len(dataVips))
 
 	var results []string
 
@@ -79,7 +72,7 @@ func main() {
 
 		fsname := testFilesystemName + "-" + hostname
 
-		for k, v := range dataVips {
+		for _, dataVip := range dataVips {
 
 			fs := FileSystem{Name: fsname}
 			fs.Nfs.Enabled = true
@@ -90,9 +83,6 @@ func main() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
-			dataVip := v[0]
-			fmt.Printf("Found %d data VIPs in subnet %s, will use: %s\n", len(v), k, dataVip)
 
 			export := "/" + fsname
 			fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
@@ -148,10 +138,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		for k, v := range dataVips {
-			dataVip := v[0]
-			fmt.Printf("Found %d data VIPs in subnet %s, will use: %s\n", len(v), k, dataVip)
-
+		for _, dataVip := range dataVips {
 			bucketName := testObjectBucketName + "-" + hostname
 			err = c.CreateObjectStoreBucket(bucketName, objAccountName)
 			if err != nil {
@@ -206,8 +193,7 @@ func main() {
 		}
 	}
 
-	fmt.Println()
-	fmt.Println("dataVip,protocol,result,write_tput,read_tput")
+	fmt.Println("\ndataVip,protocol,result,write_tput,read_tput")
 	for _, r := range results {
 		fmt.Println(r)
 	}
