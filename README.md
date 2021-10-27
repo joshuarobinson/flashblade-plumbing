@@ -56,3 +56,9 @@ The following Ansible ad hoc commands first copy the downloaded binary to all no
 ansible myhosts -o -m copy -a "src=fb-plumbing-v0.3 dest=fb-plumbing mode=+x"
 ansible myhosts --forks 2 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 ./fb-plumbing"
 ```
+
+## Command Line Options
+
+- -skip-nfs, -skip-s3: Skip running either of the protocols as part of the test suite.
+- -test-duration: length of each individual test run (read or write, nfs or s3), in seconds. Default is 60.
+- -datavip a.b.c.d: allows manually specifying the endpoint to connect to for NFS and S3 tests. By default, the tool queries the FlashBlade and uses one data VIP per subnet.

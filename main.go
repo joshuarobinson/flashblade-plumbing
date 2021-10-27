@@ -12,12 +12,12 @@ const testObjectAccountName = "deleteme-go-plumb-account"
 const testObjectUserName = "deleteme-go-plumb-user"
 const testObjectBucketName = "deleteme-go-plumb-bucket"
 
-
 func main() {
 
 	skipNfsPtr := flag.Bool("skip-nfs", false, "Skip NFS Tests")
 	skipS3Ptr := flag.Bool("skip-s3", false, "Skip S3 Tests")
 	testDurationPtr := flag.Int("test-duration", 60, "Duration to run each test, in seconds.")
+	dataVipPtr := flag.String("datavip", "", "Remote IP address for data connections.")
 	flag.Parse()
 
 	testDuration := *testDurationPtr
@@ -50,10 +50,15 @@ func main() {
 	}
 	defer c.Close()
 
-	dataVips, err := c.GetOneDataInterfacePerSubnet()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	var dataVips []string
+	if *dataVipPtr != "" {
+		dataVips = []string{*dataVipPtr}
+	} else {
+		dataVips, err = c.GetOneDataInterfacePerSubnet()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	if len(dataVips) > 1 {
