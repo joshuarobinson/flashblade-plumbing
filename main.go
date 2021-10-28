@@ -18,6 +18,8 @@ func main() {
 	skipS3Ptr := flag.Bool("skip-s3", false, "Skip S3 Tests")
 	testDurationPtr := flag.Int("test-duration", 60, "Duration to run each test, in seconds.")
 	dataVipPtr := flag.String("datavip", "", "Remote IP address for data connections.")
+	filesystemPtr := flag.String("filesystem", "", "Remote filesystem for NFS testing. Default is to automatically create temporary filesystem.")
+	bucketPtr := flag.String("bucket", "", "Remote bucket for S3 testing. Default is to automatically create temporary bucket.")
 	flag.Parse()
 
 	testDuration := *testDurationPtr
@@ -25,12 +27,36 @@ func main() {
 	mgmtVIP := os.Getenv("FB_MGMT_VIP")
 	fbtoken := os.Getenv("FB_TOKEN")
 
-	if mgmtVIP == "" {
-		fmt.Println("Must set environment variable FB_MGMT_VIP to FlashBlade management VIP.")
+	hostname := getShortHostname()
+
+	fsName := *filesystemPtr
+	bucketName := *bucketPtr
+
+	// If either filesystem or bucket manually specified, disable autoprovisioning.
+	autoProvision := fsName == "" && bucketName == ""
+
+	if !autoProvision && *dataVipPtr == "" {
+		fmt.Println("ERROR. If testing existing filesystems or buckets, must also specifiy -datavip option")
 		os.Exit(1)
 	}
-	if fbtoken == "" {
-		fmt.Println("Must set environment variable FB_TOKEN to FlashBlade REST Token.")
+
+	if autoProvision {
+		fsName = testFilesystemName + "-" + hostname
+		bucketName = testObjectBucketName + "-" + hostname
+	}
+
+	// Infer "skip" if either of the bucket or filesystem wasn't specified.
+	if !autoProvision {
+		*skipNfsPtr = *skipNfsPtr || fsName == ""
+		*skipS3Ptr = *skipS3Ptr || bucketName == ""
+	}
+
+	if autoProvision && mgmtVIP == "" {
+		fmt.Println("ERROR. Must set environment variable FB_MGMT_VIP to FlashBlade management VIP.")
+		os.Exit(1)
+	}
+	if autoProvision && fbtoken == "" {
+		fmt.Println("ERROR. Must set environment variable FB_TOKEN to FlashBlade REST Token.")
 		os.Exit(1)
 	}
 
@@ -39,16 +65,18 @@ func main() {
 		fmt.Printf("WARNING. Found %d cores, recommend at least 12 cores to prevent client bottlenecks.\n", coreCount)
 	}
 
-	hostname := getShortHostname()
-
 	// Begin Main application logic.
+	var c *FlashBladeClient
+	var err error
 
-	c, err := NewFlashBladeClient(mgmtVIP, fbtoken)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if autoProvision {
+		c, err = NewFlashBladeClient(mgmtVIP, fbtoken)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		defer c.Close()
 	}
-	defer c.Close()
 
 	var dataVips []string
 	if *dataVipPtr != "" {
@@ -75,27 +103,30 @@ func main() {
 	// ===== NFS Tests =====
 	if *skipNfsPtr == false {
 
-		fsname := testFilesystemName + "-" + hostname
-
 		for _, dataVip := range dataVips {
 
-			fs := FileSystem{Name: fsname}
-			fs.Nfs.Enabled = true
-			fs.Nfs.V3Enabled = true
+			if autoProvision {
+				fs := FileSystem{Name: fsName}
+				fs.Nfs.Enabled = true
+				fs.Nfs.V3Enabled = true
 
-			err = c.CreateFileSystem(fs)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				fmt.Println("Creating filesystem ", fsName)
+				err = c.CreateFileSystem(fs)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 
-			export := "/" + fsname
+			export := "/" + fsName
 			fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
 			nfs, err := NewNFSTester(dataVip, export, coreCount*2, testDuration)
 
 			if err != nil {
 				fmt.Println(err)
-				c.DeleteFileSystem(fsname)
+				if autoProvision {
+					c.DeleteFileSystem(fsName)
+				}
 				results = append(results, fmt.Sprintf("%s,nfs,MOUNT FAILED,-,-", dataVip))
 				continue
 			}
@@ -110,51 +141,66 @@ func main() {
 
 			results = append(results, fmt.Sprintf("%s,nfs,SUCCESS,%s,%s", dataVip, ByteRateSI(write_bytes_per_sec), ByteRateSI(read_bytes_per_sec)))
 
-			err = c.DeleteFileSystem(fsname)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+			if autoProvision {
+				err = c.DeleteFileSystem(fsName)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 		}
 	}
 
 	// ===== S3 Tests =====
 	if *skipS3Ptr == false {
+
 		objAccountName := testObjectAccountName + "-" + hostname
-		fmt.Printf("Creating object store account %s\n", objAccountName)
-		err = c.CreateObjectStoreAccount(objAccountName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
 		objUserName := testObjectUserName + "-" + hostname
-		fmt.Printf("Creating object store user %s\n", objUserName)
-		err = c.CreateObjectStoreUser(objUserName, objAccountName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		accessKey := ""
+		secretKey := ""
 
-		fmt.Printf("Creating object store access keys for %s\n", objUserName)
-		keys, err := c.CreateObjectStoreAccessKeys(objUserName, objAccountName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		if autoProvision {
 
-		for _, dataVip := range dataVips {
-			bucketName := testObjectBucketName + "-" + hostname
-			err = c.CreateObjectStoreBucket(bucketName, objAccountName)
+			fmt.Printf("Creating object store account %s\n", objAccountName)
+			err := c.CreateObjectStoreAccount(objAccountName)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			s3, err := NewS3Tester(dataVip, keys[0].Name, keys[0].SecretAccessKey, bucketName, coreCount, testDuration)
+			fmt.Printf("Creating object store user %s\n", objUserName)
+			err = c.CreateObjectStoreUser(objUserName, objAccountName)
 			if err != nil {
 				fmt.Println(err)
-				c.DeleteObjectStoreBucket(bucketName)
+				os.Exit(1)
+			}
+
+			fmt.Printf("Creating object store access keys for %s\n", objUserName)
+			keys, err := c.CreateObjectStoreAccessKeys(objUserName, objAccountName)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			accessKey = keys[0].Name
+			secretKey = keys[0].SecretAccessKey
+		}
+
+		for _, dataVip := range dataVips {
+
+			if autoProvision {
+				err = c.CreateObjectStoreBucket(bucketName, objAccountName)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
+
+			s3, err := NewS3Tester(dataVip, accessKey, secretKey, bucketName, coreCount, testDuration)
+			if err != nil {
+				fmt.Println(err)
+				if autoProvision {
+					c.DeleteObjectStoreBucket(bucketName)
+				}
 				results = append(results, fmt.Sprintf("%s,s3,FAILED TO CONNECT,-,-", dataVip))
 				continue
 			}
@@ -169,32 +215,36 @@ func main() {
 
 			results = append(results, fmt.Sprintf("%s,s3,SUCCESS,%s,%s", dataVip, ByteRateSI(write_bytes_per_sec), ByteRateSI(read_bytes_per_sec)))
 
-			err = c.DeleteObjectStoreBucket(bucketName)
+			if autoProvision {
+				err = c.DeleteObjectStoreBucket(bucketName)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
+		}
+
+		if autoProvision {
+			fmt.Printf("Deleting object store keys %s\n", accessKey)
+			err = c.DeleteObjectStoreAccessKey(accessKey)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-		}
 
-		fmt.Printf("Deleting object store keys %s\n", keys[0].Name)
-		err = c.DeleteObjectStoreAccessKey(keys[0].Name)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+			fmt.Printf("Deleting object store user %s\n", objUserName)
+			err = c.DeleteObjectStoreUser(objUserName, objAccountName)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
-		fmt.Printf("Deleting object store user %s\n", objUserName)
-		err = c.DeleteObjectStoreUser(objUserName, objAccountName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		fmt.Printf("Deleting object store account %s\n", objAccountName)
-		err = c.DeleteObjectStoreAccount(objAccountName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			fmt.Printf("Deleting object store account %s\n", objAccountName)
+			err = c.DeleteObjectStoreAccount(objAccountName)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
 	}
 

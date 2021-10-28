@@ -60,11 +60,14 @@ func NewS3Tester(endpoint string, accessKey string, secretKey string, bucketname
 func (s *S3Tester) newSession() *session.Session {
 	s3Config := &aws.Config{
 		Endpoint:         aws.String(s.endpoint),
-		Credentials:      credentials.NewStaticCredentials(s.accessKey, s.secretKey, ""),
 		Region:           aws.String("us-east-1"),
 		DisableSSL:       aws.Bool(true),
 		S3ForcePathStyle: aws.Bool(true),
 	}
+	if s.accessKey != "" {
+		s3Config.Credentials = credentials.NewStaticCredentials(s.accessKey, s.secretKey, "")
+	}
+
 	return session.Must(session.NewSession(s3Config))
 }
 
