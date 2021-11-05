@@ -34,9 +34,9 @@ Relies on the FB_MGMT_VIP and FB_TOKEN environment variables to log in to the Fl
 
 ### Manual Provisioning
 
-If either command-line option "-bucket" or "-filesystem" is specified, the tool falls back to manual mode where it assumes the filesystem and bucket already exist. As a result, it no longer needs to connect to the FlashBlade REST API. This means that the tool can be run against non-FlashBlade endpoints. The filesystem is required to support NFS v3 (v4 not supported in the tool at this time).
+If either command-line option "--bucket" or "--filesystem" is specified, the tool falls back to manual mode where it assumes the filesystem and bucket already exist. As a result, it no longer needs to connect to the FlashBlade REST API. This means that the tool can be run against non-FlashBlade endpoints. The filesystem is required to support NFS v3 (v4 not supported in the tool at this time).
 
-In this mode, the "-datavip" argument is required and the FB_MGMT_VIP/FB_TOKEN are no longer required. Credentials for the S3 access should be configured using [standard AWS SDK](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) environment variables or the /.aws/credentials file.
+In this mode, the "--datavip" argument is required and the FB_MGMT_VIP/FB_TOKEN are no longer required. Credentials for the S3 access should be configured using [standard AWS SDK](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) environment variables or the /.aws/credentials file.
 
 ### Kubernetes
 
@@ -55,7 +55,7 @@ Or for manual provisioning, specify existing filesystem and bucket name, along w
 ```
 docker run -it --rm -v /home/ir/.aws/credentials:/root/.aws/credentials \
     joshuarobinson/go-plumbing:0.4 \
-     -test-duration 30 -bucket existingbucket -filesystem existingfiles -datavip 10.62.64.200
+     --duration 30 --bucket existingbucket --filesystem existingfiles --datavip 10.62.64.200
 ```
 
 ### Binary
@@ -79,8 +79,8 @@ ansible myhosts --forks 2 -m shell -a "FB_TOKEN=REPLACEME FB_MGMT_VIP=10.2.6.20 
 
 ## Command Line Options
 
-- -skip-nfs, -skip-s3: Skip running either of the protocols as part of the test suite.
-- -test-duration: length of each individual test run (read or write, nfs or s3), in seconds. Default is 60.
-- -datavip: allows manually specifying the endpoint to connect to for NFS and S3 tests. By default, the tool queries the FlashBlade and uses one data VIP per subnet.
-- -filesystem: specify name of an external filesystem to mount for testing purposes. Must support NFSv3.
-- -bucket: specify name of an external bucket to use for testing purposes. Credentials should be provideded via environment variables or credentials file.
+- --skip-nfs, --skip-s3: Skip running either of the protocols as part of the test suite.
+- --duration: length of each individual test run (read or write, nfs or s3), in seconds. Default is 60.
+- --datavip: allows manually specifying the endpoint to connect to for NFS and S3 tests. By default, the tool queries the FlashBlade and uses one data VIP per subnet.
+- --filesystem: specify name of an external filesystem to mount for testing purposes. Must support NFSv3.
+- --bucket: specify name of an external bucket to use for testing purposes. Credentials should be provideded via environment variables or credentials file.

@@ -16,7 +16,7 @@ func main() {
 
 	skipNfsPtr := flag.Bool("skip-nfs", false, "Skip NFS Tests")
 	skipS3Ptr := flag.Bool("skip-s3", false, "Skip S3 Tests")
-	testDurationPtr := flag.Int("test-duration", 60, "Duration to run each test, in seconds.")
+	testDurationPtr := flag.Int("duration", 60, "Duration to run each test, in seconds.")
 	dataVipPtr := flag.String("datavip", "", "Remote IP address for data connections.")
 	filesystemPtr := flag.String("filesystem", "", "Remote filesystem for NFS testing. Default is to automatically create temporary filesystem.")
 	bucketPtr := flag.String("bucket", "", "Remote bucket for S3 testing. Default is to automatically create temporary bucket.")
@@ -35,8 +35,8 @@ func main() {
 	// If either filesystem or bucket manually specified, disable autoprovisioning.
 	autoProvision := fsName == "" && bucketName == ""
 
-	if !autoProvision && *dataVipPtr == "" {
-		fmt.Println("ERROR. If testing existing filesystems or buckets, must also specifiy -datavip option")
+	if !autoProvision && *dataVipPtr == "" && fsName != "" {
+		fmt.Println("ERROR. If testing an existing filesystem, must also specifiy --datavip option")
 		os.Exit(1)
 	}
 
