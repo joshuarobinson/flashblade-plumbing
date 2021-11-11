@@ -120,7 +120,7 @@ func main() {
 
 			export := "/" + fsName
 			fmt.Printf("Mounting NFS export %s at %s\n", export, dataVip)
-			nfs, err := NewNFSTester(dataVip, export, coreCount*2, testDuration)
+			nfs, err := NewNFSTester(dataVip, export, hostname, coreCount*2, testDuration)
 
 			if err != nil {
 				fmt.Println(err)
@@ -147,6 +147,9 @@ func main() {
 					fmt.Println(err)
 					os.Exit(1)
 				}
+			} else {
+				// In manual mode, cleanup the files created.
+				nfs.Cleanup()
 			}
 		}
 	}
@@ -195,7 +198,7 @@ func main() {
 				}
 			}
 
-			s3, err := NewS3Tester(dataVip, accessKey, secretKey, bucketName, coreCount, testDuration)
+			s3, err := NewS3Tester(dataVip, accessKey, secretKey, bucketName, hostname, coreCount, testDuration)
 			if err != nil {
 				fmt.Println(err)
 				if autoProvision {
@@ -221,6 +224,9 @@ func main() {
 					fmt.Println(err)
 					os.Exit(1)
 				}
+			} else {
+				// In manual mode, cleanup the objects created.
+				s3.Cleanup()
 			}
 		}
 

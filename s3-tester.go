@@ -23,6 +23,7 @@ type S3Tester struct {
 	bucket          string
 	concurrency     int
 	durationSeconds int
+	uniqueId        string
 
 	wg                        sync.WaitGroup
 	atm_finished              int32
@@ -32,9 +33,9 @@ type S3Tester struct {
 	objectsWritten int
 }
 
-func NewS3Tester(endpoint string, accessKey string, secretKey string, bucketname string, concurrency int, duration int) (*S3Tester, error) {
+func NewS3Tester(endpoint string, accessKey string, secretKey string, bucketname string, uniqueId string, concurrency int, duration int) (*S3Tester, error) {
 
-	s3Tester := &S3Tester{endpoint: endpoint, accessKey: accessKey, secretKey: secretKey, bucket: bucketname, concurrency: concurrency, durationSeconds: duration, objectsWritten: 0}
+	s3Tester := &S3Tester{endpoint: endpoint, accessKey: accessKey, secretKey: secretKey, bucket: bucketname, uniqueId: uniqueId, concurrency: concurrency, durationSeconds: duration, objectsWritten: 0}
 
 	sess := s3Tester.newSession()
 	svc := s3.New(sess)
@@ -99,10 +100,8 @@ func (s *S3Tester) writeOneObject(sname string) {
 	atomic.AddUint64(&s.atm_counter_bytes_written, bytes_written)
 }
 
-func generateTestObjectName(i int) string {
-
-	baseDir := "/"
-	oname := baseDir + "objname" + strconv.Itoa(i)
+func generateTestObjectName(prefix string, i int) string {
+	oname := "objname-" + prefix + "-" + strconv.Itoa(i)
 	return oname
 }
 
@@ -112,7 +111,7 @@ func (s *S3Tester) WriteTest() float64 {
 	atomic.StoreUint64(&s.atm_counter_bytes_written, 0)
 
 	for i := 1; i <= s.concurrency; i++ {
-		prefix := generateTestObjectName(i)
+		prefix := generateTestObjectName(s.uniqueId, i)
 		s.wg.Add(1)
 		go s.writeOneObject(prefix)
 	}
@@ -158,7 +157,7 @@ func (s *S3Tester) ReadTest() float64 {
 	atomic.StoreUint64(&s.atm_counter_bytes_read, 0)
 
 	for i := 1; i <= s.objectsWritten; i++ {
-		prefix := generateTestObjectName(i)
+		prefix := generateTestObjectName(s.uniqueId, i)
 		s.wg.Add(1)
 		go s.readOneObject(prefix)
 	}
@@ -169,4 +168,25 @@ func (s *S3Tester) ReadTest() float64 {
 
 	total_bytes := atomic.LoadUint64(&s.atm_counter_bytes_read)
 	return float64(total_bytes) / float64(s.durationSeconds)
+}
+
+func (s *S3Tester) Cleanup() error {
+
+	fmt.Println("Should be cleaning up now")
+	svc := s3.New(s.newSession())
+
+	keylist := make([]*s3.ObjectIdentifier, 0)
+	for i := 1; i <= s.objectsWritten; i++ {
+		keylist = append(keylist, &s3.ObjectIdentifier{Key: aws.String(generateTestObjectName(s.uniqueId, i))})
+	}
+
+	input := &s3.DeleteObjectsInput{
+		Bucket: &s.bucket,
+		Delete: &s3.Delete{
+			Objects: keylist,
+		},
+	}
+
+	_, err := svc.DeleteObjects(input)
+	return err
 }

@@ -10,7 +10,7 @@ The token can be created or retrieved via the FlashBlade CLI:
 
 This program operates by using the FlashBlade REST API to create test filesystems and object store accounts/key/buckets, then uses userspace NFS v3 (port 2049) and S3 code (port 80) to test write and read performance, and finally cleans up all filesystems and accounts. The IO pattern is multiple threads doing sequential writes and reads to large files/objects with random, uncompressible data. In case of multiple data VIPs defined on the FlashBlade, this tool will test against one data VIP per configured subnet. If a connection fails or a mount times out, the program will proceed to the next data VIP and continue testing.
 
-This tool requires clients to be able to access the FlashBlade management VIP and will not work with a read-only API token or if SafeMode is enabled.
+The automatic provisioning mode requires clients to be able to access the FlashBlade management VIP and will not work with a read-only API token or if SafeMode is enabled. In these cases, use the manual provision mode described below.
 
 An example output looks like below, where the client can only reach the FlashBlade on one of the configured data VIPs:
 ```

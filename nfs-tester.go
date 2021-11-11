@@ -20,16 +20,16 @@ type NFSTester struct {
 	export          string
 	concurrency     int
 	durationSeconds int
+	uniqueId        string
 
 	wg                        sync.WaitGroup
 	atm_finished              int32
 	atm_counter_bytes_written uint64
 	atm_counter_bytes_read    uint64
-
-	filesWritten int
+	filesWritten              int
 }
 
-func NewNFSTester(nfshost string, export string, concurrency int, duration int) (*NFSTester, error) {
+func NewNFSTester(nfshost string, export string, uniqueId string, concurrency int, duration int) (*NFSTester, error) {
 
 	if len(nfshost) == 0 || len(export) == 0 {
 		err := errors.New("[error] Must specify host and export.")
@@ -40,7 +40,7 @@ func NewNFSTester(nfshost string, export string, concurrency int, duration int) 
 		return nil, errors.New("[error] Must specify positive test duration.")
 	}
 
-	nfsTester := &NFSTester{nfshost: nfshost, export: export, concurrency: concurrency, durationSeconds: duration, filesWritten: 0}
+	nfsTester := &NFSTester{nfshost: nfshost, export: export, uniqueId: uniqueId, concurrency: concurrency, durationSeconds: duration, filesWritten: 0}
 
 	// Try and mount to verify
 	mount, err := nfs.DialMount(nfshost, false)
@@ -101,10 +101,10 @@ func (n *NFSTester) writeOneFile(fname string) {
 	atomic.AddUint64(&n.atm_counter_bytes_written, bytes_written)
 }
 
-func generateTestFilename(i int) string {
+func generateTestFilename(prefix string, i int) string {
 
 	baseDir := "/"
-	fname := baseDir + "filename" + strconv.Itoa(i)
+	fname := baseDir + "filename-" + prefix + "-" + strconv.Itoa(i)
 	return fname
 }
 
@@ -114,7 +114,7 @@ func (n *NFSTester) WriteTest() float64 {
 	atomic.StoreUint64(&n.atm_counter_bytes_written, 0)
 
 	for i := 1; i <= n.concurrency; i++ {
-		fname := generateTestFilename(i)
+		fname := generateTestFilename(n.uniqueId, i)
 		n.wg.Add(1)
 		go n.writeOneFile(fname)
 	}
@@ -178,7 +178,7 @@ func (n *NFSTester) ReadTest() float64 {
 	atomic.StoreUint64(&n.atm_counter_bytes_read, 0)
 
 	for i := 1; i <= n.filesWritten; i++ {
-		fname := generateTestFilename(i)
+		fname := generateTestFilename(n.uniqueId, i)
 		n.wg.Add(1)
 		go n.readOneFile(fname)
 	}
@@ -189,4 +189,28 @@ func (n *NFSTester) ReadTest() float64 {
 
 	total_bytes := atomic.LoadUint64(&n.atm_counter_bytes_read)
 	return float64(total_bytes) / float64(n.durationSeconds)
+}
+
+func (n *NFSTester) Cleanup() error {
+	mount, err := nfs.DialMount(n.nfshost, false)
+	if err != nil {
+		return err
+	}
+	auth := rpc.NewAuthUnix("anon", 1001, 1001)
+	target, err := mount.Mount(n.export, auth.Auth(), false)
+	if err != nil {
+		return err
+	}
+
+	for i := 1; i <= n.concurrency; i++ {
+		fname := generateTestFilename(n.uniqueId, i)
+		n.wg.Add(1)
+
+		go func(filename string) {
+			defer n.wg.Done()
+			target.Remove(filename)
+		}(fname)
+	}
+	n.wg.Wait()
+	return nil
 }
