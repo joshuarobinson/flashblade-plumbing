@@ -141,7 +141,7 @@ func (s *S3Tester) readOneObject(prefix string) {
 			Key:    &prefix,
 		})
 		if err != nil {
-			fmt.Println("failed to download object, %v", err)
+			fmt.Println("failed to download object", err)
 		}
 	}
 	atomic.AddUint64(&s.atm_counter_bytes_read, nullSink.bytesRead)

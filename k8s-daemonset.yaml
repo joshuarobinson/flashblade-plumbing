@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: plumb
-        image: joshuarobinson/go-plumbing:0.3
+        image: joshuarobinson/go-plumbing:0.4
         env:
           - name: FB_MGMT_VIP
             value: "REPLACEME"
