@@ -1,4 +1,4 @@
-FROM golang:1.17.7-alpine AS builder
+FROM golang:1.17.8-alpine AS builder
 
 RUN apk add build-base git musl-dev
 
@@ -13,7 +13,7 @@ RUN go build -tags musl -o fb-plumbing .
 RUN go test *.go
 
 # Copy only the binary into the final Docker image
-FROM golang:1.17.7-alpine
+FROM golang:1.17.8-alpine
 COPY --from=builder /app/fb-plumbing /app/fb-plumbing
 
 # Set entrypoint to automatically invoke program
